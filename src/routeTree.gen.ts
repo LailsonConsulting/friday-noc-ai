@@ -9,8 +9,32 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ZabbixRouteImport } from './routes/zabbix'
+import { Route as ProvedoresRouteImport } from './routes/provedores'
+import { Route as EquipamentosRouteImport } from './routes/equipamentos'
+import { Route as CredenciaisRouteImport } from './routes/credenciais'
 import { Route as IndexRouteImport } from './routes/index'
 
+const ZabbixRoute = ZabbixRouteImport.update({
+  id: '/zabbix',
+  path: '/zabbix',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProvedoresRoute = ProvedoresRouteImport.update({
+  id: '/provedores',
+  path: '/provedores',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EquipamentosRoute = EquipamentosRouteImport.update({
+  id: '/equipamentos',
+  path: '/equipamentos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CredenciaisRoute = CredenciaisRouteImport.update({
+  id: '/credenciais',
+  path: '/credenciais',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -19,28 +43,78 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/credenciais': typeof CredenciaisRoute
+  '/equipamentos': typeof EquipamentosRoute
+  '/provedores': typeof ProvedoresRoute
+  '/zabbix': typeof ZabbixRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/credenciais': typeof CredenciaisRoute
+  '/equipamentos': typeof EquipamentosRoute
+  '/provedores': typeof ProvedoresRoute
+  '/zabbix': typeof ZabbixRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/credenciais': typeof CredenciaisRoute
+  '/equipamentos': typeof EquipamentosRoute
+  '/provedores': typeof ProvedoresRoute
+  '/zabbix': typeof ZabbixRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/credenciais' | '/equipamentos' | '/provedores' | '/zabbix'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/credenciais' | '/equipamentos' | '/provedores' | '/zabbix'
+  id:
+    | '__root__'
+    | '/'
+    | '/credenciais'
+    | '/equipamentos'
+    | '/provedores'
+    | '/zabbix'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CredenciaisRoute: typeof CredenciaisRoute
+  EquipamentosRoute: typeof EquipamentosRoute
+  ProvedoresRoute: typeof ProvedoresRoute
+  ZabbixRoute: typeof ZabbixRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/zabbix': {
+      id: '/zabbix'
+      path: '/zabbix'
+      fullPath: '/zabbix'
+      preLoaderRoute: typeof ZabbixRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/provedores': {
+      id: '/provedores'
+      path: '/provedores'
+      fullPath: '/provedores'
+      preLoaderRoute: typeof ProvedoresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/equipamentos': {
+      id: '/equipamentos'
+      path: '/equipamentos'
+      fullPath: '/equipamentos'
+      preLoaderRoute: typeof EquipamentosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/credenciais': {
+      id: '/credenciais'
+      path: '/credenciais'
+      fullPath: '/credenciais'
+      preLoaderRoute: typeof CredenciaisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -53,7 +127,21 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CredenciaisRoute: CredenciaisRoute,
+  EquipamentosRoute: EquipamentosRoute,
+  ProvedoresRoute: ProvedoresRoute,
+  ZabbixRoute: ZabbixRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
