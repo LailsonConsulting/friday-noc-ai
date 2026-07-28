@@ -15,8 +15,9 @@ export interface ZabbixConfig {
   token: string;
 }
 
-export type Vendor = "MikroTik" | "Huawei" | "Datacom" | "V-SOL";
+export type Vendor = string;
 export type Funcao = "Borda" | "Concentrador PPPoE" | "OLT";
+export type Protocol = string;
 
 export interface Equipment {
   id: string;
@@ -32,4 +33,5 @@ export interface SshCredential {
   equipmentId: string;
   usuario: string;
   senha: string;
+  protocol: Protocol;
 }
