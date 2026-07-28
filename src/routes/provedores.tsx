@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { Plus, Pencil, Trash2, Building2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Plus, Pencil, Trash2, Building2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { PageShell } from "@/components/noc/page-shell";
@@ -21,8 +21,9 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { nocApi, useProviders } from "@/lib/noc/store";
 import type { Provider } from "@/lib/noc/types";
+
+const API_URL = "http://172.31.1.243:8000/api/provedores";
 
 export const Route = createFileRoute("/provedores")({
   head: () => ({
@@ -40,11 +41,49 @@ type FormState = { nome: string; descricao: string; status: boolean };
 const empty: FormState = { nome: "", descricao: "", status: true };
 
 function ProvidersPage() {
-  const providers = useProviders();
+  const [providers, setProviders] = useState<Provider[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Provider | null>(null);
   const [form, setForm] = useState<FormState>(empty);
   const [toDelete, setToDelete] = useState<Provider | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(API_URL);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const list: Provider[] = (Array.isArray(data) ? data : []).map((r: any) => ({
+          id: String(r.id ?? r.uuid ?? crypto.randomUUID()),
+          nome: r.nome ?? r.name ?? "",
+          descricao: r.descricao ?? r.description ?? "",
+          status:
+            r.status === "ativo" || r.status === "inativo"
+              ? r.status
+              : r.ativo === false
+                ? "inativo"
+                : "ativo",
+        }));
+        if (!cancelled) setProviders(list);
+      } catch (err: any) {
+        if (!cancelled) {
+          setError(err?.message ?? "Erro ao carregar provedores");
+          toast.error("Falha ao carregar provedores da API");
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const openNew = () => { setEditing(null); setForm(empty); setOpen(true); };
   const openEdit = (p: Provider) => {
@@ -57,10 +96,10 @@ function ProvidersPage() {
     if (!form.nome.trim()) { toast.error("Nome obrigatório"); return; }
     const payload = { nome: form.nome.trim(), descricao: form.descricao.trim(), status: form.status ? "ativo" as const : "inativo" as const };
     if (editing) {
-      nocApi.updateProvider(editing.id, payload);
+      setProviders((prev) => prev.map((p) => (p.id === editing.id ? { ...payload, id: editing.id } : p)));
       toast.success("Provedor atualizado");
     } else {
-      nocApi.createProvider(payload);
+      setProviders((prev) => [...prev, { ...payload, id: crypto.randomUUID() }]);
       toast.success("Provedor criado");
     }
     setOpen(false);
@@ -68,7 +107,7 @@ function ProvidersPage() {
 
   const confirmDelete = () => {
     if (!toDelete) return;
-    nocApi.deleteProvider(toDelete.id);
+    setProviders((prev) => prev.filter((p) => p.id !== toDelete.id));
     toast.success(`Provedor "${toDelete.nome}" removido`);
     setToDelete(null);
   };
@@ -94,14 +133,31 @@ function ProvidersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {providers.length === 0 && (
+            {loading && (
+              <TableRow>
+                <TableCell colSpan={4} className="h-32 text-center text-muted-foreground">
+                  <div className="flex items-center justify-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Carregando provedores...
+                  </div>
+                </TableCell>
+              </TableRow>
+            )}
+            {!loading && error && (
+              <TableRow>
+                <TableCell colSpan={4} className="h-32 text-center text-destructive">
+                  {error}
+                </TableCell>
+              </TableRow>
+            )}
+            {!loading && !error && providers.length === 0 && (
               <TableRow>
                 <TableCell colSpan={4} className="h-32 text-center text-muted-foreground">
                   Nenhum provedor cadastrado.
                 </TableCell>
               </TableRow>
             )}
-            {providers.map((p) => (
+            {!loading && !error && providers.map((p) => (
               <TableRow key={p.id}>
                 <TableCell className="font-medium">
                   <div className="flex items-center gap-2">
