@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ZabbixRouteImport } from './routes/zabbix'
 import { Route as ProvedoresRouteImport } from './routes/provedores'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as EquipamentosRouteImport } from './routes/equipamentos'
 import { Route as CredenciaisRouteImport } from './routes/credenciais'
 import { Route as IndexRouteImport } from './routes/index'
@@ -23,6 +24,11 @@ const ZabbixRoute = ZabbixRouteImport.update({
 const ProvedoresRoute = ProvedoresRouteImport.update({
   id: '/provedores',
   path: '/provedores',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EquipamentosRoute = EquipamentosRouteImport.update({
@@ -45,6 +51,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/credenciais': typeof CredenciaisRoute
   '/equipamentos': typeof EquipamentosRoute
+  '/login': typeof LoginRoute
   '/provedores': typeof ProvedoresRoute
   '/zabbix': typeof ZabbixRoute
 }
@@ -52,6 +59,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/credenciais': typeof CredenciaisRoute
   '/equipamentos': typeof EquipamentosRoute
+  '/login': typeof LoginRoute
   '/provedores': typeof ProvedoresRoute
   '/zabbix': typeof ZabbixRoute
 }
@@ -60,19 +68,33 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/credenciais': typeof CredenciaisRoute
   '/equipamentos': typeof EquipamentosRoute
+  '/login': typeof LoginRoute
   '/provedores': typeof ProvedoresRoute
   '/zabbix': typeof ZabbixRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/credenciais' | '/equipamentos' | '/provedores' | '/zabbix'
+  fullPaths:
+    | '/'
+    | '/credenciais'
+    | '/equipamentos'
+    | '/login'
+    | '/provedores'
+    | '/zabbix'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/credenciais' | '/equipamentos' | '/provedores' | '/zabbix'
+  to:
+    | '/'
+    | '/credenciais'
+    | '/equipamentos'
+    | '/login'
+    | '/provedores'
+    | '/zabbix'
   id:
     | '__root__'
     | '/'
     | '/credenciais'
     | '/equipamentos'
+    | '/login'
     | '/provedores'
     | '/zabbix'
   fileRoutesById: FileRoutesById
@@ -81,6 +103,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CredenciaisRoute: typeof CredenciaisRoute
   EquipamentosRoute: typeof EquipamentosRoute
+  LoginRoute: typeof LoginRoute
   ProvedoresRoute: typeof ProvedoresRoute
   ZabbixRoute: typeof ZabbixRoute
 }
@@ -99,6 +122,13 @@ declare module '@tanstack/react-router' {
       path: '/provedores'
       fullPath: '/provedores'
       preLoaderRoute: typeof ProvedoresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/equipamentos': {
@@ -129,6 +159,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CredenciaisRoute: CredenciaisRoute,
   EquipamentosRoute: EquipamentosRoute,
+  LoginRoute: LoginRoute,
   ProvedoresRoute: ProvedoresRoute,
   ZabbixRoute: ZabbixRoute,
 }

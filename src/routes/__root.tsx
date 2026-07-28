@@ -4,6 +4,8 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
+  useNavigate,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -15,6 +17,9 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/s
 import { AppSidebar } from "@/components/noc/app-sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import { LogOut } from "lucide-react";
+import { authApi, useAuth } from "@/lib/noc/auth";
 
 function NotFoundComponent() {
   return (
@@ -125,6 +130,35 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const pathname = useRouterState({ select: (r) => r.location.pathname });
+  const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
+  const isLoginRoute = pathname === "/login";
+
+  useEffect(() => {
+    if (!isAuthenticated && !isLoginRoute) {
+      navigate({ to: "/login", replace: true });
+    }
+  }, [isAuthenticated, isLoginRoute, navigate]);
+
+  if (isLoginRoute) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <Outlet />
+        <Toaster />
+      </QueryClientProvider>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <div className="grid min-h-screen place-items-center bg-background text-sm text-muted-foreground font-mono-tech">
+          &gt; verificando sessão...
+        </div>
+      </QueryClientProvider>
+    );
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -138,9 +172,29 @@ function RootComponent() {
               <div className="font-mono-tech text-xs uppercase tracking-[0.25em] text-muted-foreground">
                 &gt; console_noc
               </div>
-              <div className="ml-auto flex items-center gap-2 text-[11px] font-mono-tech text-muted-foreground">
-                <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_var(--primary)]" />
-                online
+              <div className="ml-auto flex items-center gap-3">
+                <div className="hidden items-center gap-2 text-[11px] font-mono-tech text-muted-foreground sm:flex">
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_var(--primary)]" />
+                  online
+                </div>
+                {user && (
+                  <span className="hidden font-mono-tech text-[11px] uppercase tracking-widest text-muted-foreground md:inline">
+                    op:{" "}
+                    <span className="text-primary">{user}</span>
+                  </span>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 gap-2 border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  onClick={() => {
+                    authApi.logout();
+                    navigate({ to: "/login", replace: true });
+                  }}
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                  Sair
+                </Button>
               </div>
             </header>
             <Outlet />
