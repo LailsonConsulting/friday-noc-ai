@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Plus, Pencil, Trash2, Server } from "lucide-react";
+import { Plus, Pencil, Trash2, Server, PlusCircle } from "lucide-react";
 import { toast } from "sonner";
 
 import { PageShell } from "@/components/noc/page-shell";
@@ -22,7 +22,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { nocApi, useEquipment, useProviders } from "@/lib/noc/store";
+import { nocApi, useEquipment, useProviders, useVendors } from "@/lib/noc/store";
 import type { Equipment, Vendor, Funcao } from "@/lib/noc/types";
 
 export const Route = createFileRoute("/equipamentos")({
@@ -37,31 +37,43 @@ export const Route = createFileRoute("/equipamentos")({
   component: EquipmentPage,
 });
 
-const VENDORS: Vendor[] = ["MikroTik", "Huawei", "Datacom", "V-SOL"];
 const FUNCOES: Funcao[] = ["Borda", "Concentrador PPPoE", "OLT"];
 
 type FormState = { hostname: string; ip: string; vendor: Vendor; funcao: Funcao; providerId: string };
-const empty: FormState = { hostname: "", ip: "", vendor: "MikroTik", funcao: "Borda", providerId: "" };
+const empty: FormState = { hostname: "", ip: "", vendor: "", funcao: "Borda", providerId: "" };
 
 function EquipmentPage() {
   const equipment = useEquipment();
   const providers = useProviders();
+  const vendors = useVendors();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Equipment | null>(null);
   const [form, setForm] = useState<FormState>(empty);
   const [toDelete, setToDelete] = useState<Equipment | null>(null);
+  const [vendorDialog, setVendorDialog] = useState(false);
+  const [newVendor, setNewVendor] = useState("");
 
   const providerName = (id: string) => providers.find((p) => p.id === id)?.nome ?? "—";
 
-  const openNew = () => { setEditing(null); setForm({ ...empty, providerId: providers[0]?.id ?? "" }); setOpen(true); };
+  const openNew = () => { setEditing(null); setForm({ ...empty, vendor: vendors[0] ?? "", providerId: providers[0]?.id ?? "" }); setOpen(true); };
   const openEdit = (e: Equipment) => { setEditing(e); setForm({ hostname: e.hostname, ip: e.ip, vendor: e.vendor, funcao: e.funcao, providerId: e.providerId }); setOpen(true); };
 
   const submit = () => {
     if (!form.hostname.trim() || !form.ip.trim()) { toast.error("Hostname e IP são obrigatórios"); return; }
+    if (!form.vendor) { toast.error("Selecione uma marca"); return; }
     if (!form.providerId) { toast.error("Selecione um provedor"); return; }
     if (editing) { nocApi.updateEquipment(editing.id, form); toast.success("Equipamento atualizado"); }
     else { nocApi.createEquipment(form); toast.success("Equipamento criado"); }
     setOpen(false);
+  };
+
+  const submitVendor = () => {
+    const created = nocApi.createVendor(newVendor);
+    if (!created) { toast.error("Marca inválida ou já existente"); return; }
+    setForm((f) => ({ ...f, vendor: newVendor.trim() }));
+    toast.success("Marca adicionada");
+    setNewVendor("");
+    setVendorDialog(false);
   };
 
   return (
@@ -122,10 +134,15 @@ function EquipmentPage() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-2">
-                <Label>Vendor</Label>
-                <Select value={form.vendor} onValueChange={(v) => setForm({ ...form, vendor: v as Vendor })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{VENDORS.map((v) => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent>
+                <div className="flex items-center justify-between">
+                  <Label>Marca (Vendor)</Label>
+                  <Button type="button" variant="ghost" size="sm" className="h-6 gap-1 px-2 text-[11px] text-primary hover:text-primary" onClick={() => setVendorDialog(true)}>
+                    <PlusCircle className="h-3 w-3" /> nova
+                  </Button>
+                </div>
+                <Select value={form.vendor} onValueChange={(v) => setForm({ ...form, vendor: v })}>
+                  <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                  <SelectContent>{vendors.map((v) => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="grid gap-2">
@@ -147,6 +164,30 @@ function EquipmentPage() {
           <DialogFooter>
             <Button variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
             <Button onClick={submit}>{editing ? "Salvar" : "Criar"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={vendorDialog} onOpenChange={setVendorDialog}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Nova marca</DialogTitle>
+            <DialogDescription>Cadastre um novo fabricante de equipamento.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-2">
+            <Label htmlFor="vendor-name">Nome da marca</Label>
+            <Input
+              id="vendor-name"
+              value={newVendor}
+              onChange={(e) => setNewVendor(e.target.value)}
+              className="font-mono-tech text-sm"
+              placeholder="Cisco, Juniper, Nokia..."
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setVendorDialog(false)}>Cancelar</Button>
+            <Button onClick={submitVendor}>Adicionar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
