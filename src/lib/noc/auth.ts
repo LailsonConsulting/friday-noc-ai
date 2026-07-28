@@ -74,11 +74,13 @@ function subscribe(l: () => void) {
   return () => listeners.delete(l);
 }
 
+const serverSnapshot: AuthState = { token: null, user: null };
+
 export function useAuth() {
   const s = useSyncExternalStore(
     subscribe,
     () => snapshot,
-    () => ({ token: null, user: null }),
+    () => serverSnapshot,
   );
   return { ...s, isAuthenticated: !!s.token };
 }

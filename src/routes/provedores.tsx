@@ -58,7 +58,10 @@ function ProvidersPage() {
         const res = await fetch(API_URL);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        const list: Provider[] = (Array.isArray(data) ? data : []).map((r: any) => ({
+        if (!Array.isArray(data)) {
+          throw new Error("Formato inesperado da API: resposta não é um array");
+        }
+        const list: Provider[] = data.map((r: any) => ({
           id: String(r.id ?? r.uuid ?? crypto.randomUUID()),
           nome: r.nome ?? r.name ?? "",
           descricao: r.descricao ?? r.description ?? "",
@@ -72,8 +75,12 @@ function ProvidersPage() {
         if (!cancelled) setProviders(list);
       } catch (err: any) {
         if (!cancelled) {
-          setError(err?.message ?? "Erro ao carregar provedores");
-          toast.error("Falha ao carregar provedores da API");
+          const message = err?.message ?? "Erro ao carregar provedores";
+          setError(message);
+          setProviders([]);
+          toast.error("Falha ao carregar provedores", {
+            description: message,
+          });
         }
       } finally {
         if (!cancelled) setLoading(false);
