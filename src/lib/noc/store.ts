@@ -1,6 +1,13 @@
 import { useSyncExternalStore } from "react";
-import type { Provider, ZabbixConfig, Equipment, SshCredential } from "./types";
-import { mockProviders, mockZabbixConfigs, mockEquipment, mockCredentials } from "./mock-data";
+import type { Provider, ZabbixConfig, Equipment, SshCredential, Vendor, Protocol } from "./types";
+import {
+  mockProviders,
+  mockZabbixConfigs,
+  mockEquipment,
+  mockCredentials,
+  mockVendors,
+  mockProtocols,
+} from "./mock-data";
 
 /**
  * In-memory store for mocked NOC data.
@@ -16,6 +23,8 @@ type State = {
   zabbix: ZabbixConfig[];
   equipment: Equipment[];
   credentials: SshCredential[];
+  vendors: Vendor[];
+  protocols: Protocol[];
 };
 
 let state: State = {
@@ -23,6 +32,8 @@ let state: State = {
   zabbix: [...mockZabbixConfigs],
   equipment: [...mockEquipment],
   credentials: [...mockCredentials],
+  vendors: [...mockVendors],
+  protocols: [...mockProtocols],
 };
 
 const listeners = new Set<() => void>();
@@ -107,6 +118,28 @@ export const nocApi = {
     state = { ...state, credentials: state.credentials.filter((c) => c.id !== id) };
     emit();
   },
+
+  // Vendors (marcas de equipamento)
+  listVendors: () => state.vendors,
+  createVendor: (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return false;
+    if (state.vendors.some((v) => v.toLowerCase() === trimmed.toLowerCase())) return false;
+    state = { ...state, vendors: [...state.vendors, trimmed] };
+    emit();
+    return true;
+  },
+
+  // Protocols (SSH, Telnet, etc.)
+  listProtocols: () => state.protocols,
+  createProtocol: (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return false;
+    if (state.protocols.some((p) => p.toLowerCase() === trimmed.toLowerCase())) return false;
+    state = { ...state, protocols: [...state.protocols, trimmed] };
+    emit();
+    return true;
+  },
 };
 
 function useSlice<T>(selector: (s: State) => T): T {
@@ -121,3 +154,5 @@ export const useProviders = () => useSlice((s) => s.providers);
 export const useZabbixConfigs = () => useSlice((s) => s.zabbix);
 export const useEquipment = () => useSlice((s) => s.equipment);
 export const useCredentials = () => useSlice((s) => s.credentials);
+export const useVendors = () => useSlice((s) => s.vendors);
+export const useProtocols = () => useSlice((s) => s.protocols);
