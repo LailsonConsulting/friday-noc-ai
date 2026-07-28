@@ -1,4 +1,8 @@
-import type { Provider, ZabbixConfig, Equipment, SshCredential } from "./types";
+import type { Provider, ZabbixConfig, Equipment, SshCredential, Vendor, Protocol } from "./types";
+
+export const mockVendors: Vendor[] = ["MikroTik", "Huawei", "Datacom", "V-SOL"];
+
+export const mockProtocols: Protocol[] = ["SSH", "Telnet"];
 
 export const mockProviders: Provider[] = [
   { id: "prov-1", nome: "FibraNet Telecom", descricao: "Provedor regional — Sudeste, ~48k assinantes", status: "ativo" },
@@ -24,9 +28,9 @@ export const mockEquipment: Equipment[] = [
 ];
 
 export const mockCredentials: SshCredential[] = [
-  { id: "cred-1", equipmentId: "eq-1", usuario: "admin", senha: "MikTk!2024#Fbn" },
-  { id: "cred-2", equipmentId: "eq-2", usuario: "noc-ssh", senha: "Hw@Conc-2024" },
-  { id: "cred-3", equipmentId: "eq-3", usuario: "root", senha: "vsol-olt-9910" },
-  { id: "cred-4", equipmentId: "eq-4", usuario: "operador", senha: "dtc0m!OLT" },
-  { id: "cred-5", equipmentId: "eq-5", usuario: "admin", senha: "SertaoMik#01" },
+  { id: "cred-1", equipmentId: "eq-1", usuario: "admin", senha: "MikTk!2024#Fbn", protocol: "SSH" },
+  { id: "cred-2", equipmentId: "eq-2", usuario: "noc-ssh", senha: "Hw@Conc-2024", protocol: "SSH" },
+  { id: "cred-3", equipmentId: "eq-3", usuario: "root", senha: "vsol-olt-9910", protocol: "Telnet" },
+  { id: "cred-4", equipmentId: "eq-4", usuario: "operador", senha: "dtc0m!OLT", protocol: "SSH" },
+  { id: "cred-5", equipmentId: "eq-5", usuario: "admin", senha: "SertaoMik#01", protocol: "Telnet" },
 ];
